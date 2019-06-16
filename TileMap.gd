@@ -23,11 +23,11 @@ var heights = {
 	}
 
 func _ready():
-	elevation_noise.period = 18
+	elevation_noise.period = 180
 	elevation_noise.persistence = 0.4
 	elevation_noise.octaves = 5
 	
-	moisture_noise.period = 8
+	moisture_noise.period = 80
 	moisture_noise.persistence = 0.5
 	moisture_noise.octaves = 2
 	randomize()
@@ -123,8 +123,8 @@ func generate_chunk_contents(elevation_noise : OpenSimplexNoise, chunk_coords : 
 			equator_distance /= equator_distance_max
 			
 			# gets noise values for position
-			var elevation = elevation_noise.get_noise_2dv(world_coords)
-			var moisture = moisture_noise.get_noise_2dv(world_coords)
+			var elevation = elevation_noise.get_noise_2dv(map_to_world(world_coords))
+			var moisture = moisture_noise.get_noise_2dv(map_to_world(world_coords))
 			
 			elevation = noise_value_normalize(elevation)
 			moisture = noise_value_normalize(moisture)
@@ -144,8 +144,8 @@ func generate_chunk_contents(elevation_noise : OpenSimplexNoise, chunk_coords : 
 			# keep in mind you will need to establish what chunk this is in later
 			# because the data only returns local coordinates for each chunk.
 			# that being (0,0) through (15,15), for example.
-			if x % 8 == 0 and y % 8 == 0:
-				print([world_coords, tile_center_distance, elevation, moisture])
+#			if x % 8 == 0 and y % 8 == 0:
+#				print([world_coords, tile_center_distance, elevation, moisture])
 			contents[world_coords] = {"type" : cell_type, 
 									  "local coordinates" : local_coords, 
 									  "chunk coordinates" : chunk_coords,
