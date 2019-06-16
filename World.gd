@@ -12,8 +12,11 @@ func _ready():
 	$Player.position = center_pos_pixels
 	var camera = $Player/Camera2D
 	var world_height_pixels = tilemap.cell_size.y * tilemap.chunk_size * world_size.y
+	var world_width = tilemap.cell_size.x * tilemap.chunk_size * world_size.x
 	camera.limit_top = -world_height_pixels/2 + center_pos_pixels.y
 	camera.limit_bottom = world_height_pixels/2 + center_pos_pixels.y 
+	camera.limit_left = -world_width/2 + center_pos_pixels.x
+	camera.limit_right = world_width/2 + center_pos_pixels.x
 	# $TileMap.free()
 	pass # Replace with function body.
 

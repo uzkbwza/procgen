@@ -4,10 +4,11 @@
 [ext_resource path="res://Camera2D.gd" type="Script" id=2]
 [ext_resource path="res://icon.png" type="Texture" id=3]
 
-[sub_resource type="RectangleShape2D" id=1]
-extents = Vector2( 4.32599, 3.79366 )
+[sub_resource type="CircleShape2D" id=1]
+radius = 15.4943
 
 [node name="Player" type="KinematicBody2D"]
+scale = Vector2( 0.5, 0.5 )
 script = ExtResource( 1 )
 __meta__ = {
 "_edit_group_": true

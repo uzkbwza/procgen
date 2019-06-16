@@ -27,9 +27,9 @@ func _ready():
 	elevation_noise.persistence = 0.4
 	elevation_noise.octaves = 5
 	
-	moisture_noise.period = 40
+	moisture_noise.period = 8
 	moisture_noise.persistence = 0.5
-	moisture_noise.octaves = 3
+	moisture_noise.octaves = 2
 	randomize()
 	elevation_noise.seed = randi()
 	moisture_noise.seed = randi()
@@ -40,12 +40,21 @@ func _process(delta):
 func elevation_distance_shape(elevation, distance):
 	return elevation_lower(distance) + elevation * (elevation_upper(distance) - elevation_lower(distance))
 
-
 func elevation_lower(d):
 	return 0
 
 func elevation_upper(d):
 	return 1 - (pow(d,1.4))
+	pass
+
+func moisture_distance_shape(moisture, distance):
+	return moisture_lower(distance) + moisture * (moisture_upper(distance) - moisture_lower(distance))
+
+func moisture_lower(d):
+	return (1 - d)/2
+
+func moisture_upper(d):
+	return 1 - pow(d, 2)
 	pass
 
 func cell(cell_name):
@@ -60,14 +69,15 @@ func choose_cell(elevation, moisture) -> int:
 		return cell("shore")
 		
 	if threshold >= heights.sand and threshold < heights.grass:
-		if moisture >= 0.55:
+		if moisture >= 0.60:
 			return cell("marsh")
 		return cell("sand")
 		
 	if threshold >= heights.grass and threshold < heights.dirt:
-		if moisture <= 0.6:
-			return cell("grass")
-		return cell("jungle")
+		if moisture >= 0.65:
+			return cell("jungle")
+		return cell("grass")
+
 		
 	if threshold >= heights.dirt and threshold < heights.mountain:
 		return cell("dirt")
@@ -77,26 +87,22 @@ func choose_cell(elevation, moisture) -> int:
 	return 0
 
 func noise_value_normalize(value):
-	# converts noise value float (from -1 to 1)
-	# to 0-1
+	# converts noise value from -1-1 to 0-1
 	var result = value * 0.5 + 0.5
 	return result
 
 func generate_chunk_contents(elevation_noise : OpenSimplexNoise, chunk_coords : Vector2) -> Dictionary:
 	var contents := {}
-	# init empty dict to contain all tile values
 	var x_off
 	var y_off
 	
-	# get max distance to world center
 	var world_center_x = (world_size.x * chunk_size) / 2
 	var world_center_y = (world_size.y * chunk_size) / 2
 	world_center = Vector2(world_center_x, world_center_y)
+	
 	var tile_center_distance_max = common.distance(Vector2(0,0), world_center)
 	var equator_distance_max = common.distance(Vector2(0,0), Vector2(0, world_center_y))
-#	print(tile_center_distance_max)
-#	var chunk_center_distance_normalized = chunk_center_distance / chunk_center_distance_max
-#	"."yield(get_tree().create_timer(0.1), "timeout")
+
 	for x in range(chunk_size):
 		for y in range(chunk_size):
 			x_off = (chunk_size * chunk_coords.x)
@@ -114,6 +120,7 @@ func generate_chunk_contents(elevation_noise : OpenSimplexNoise, chunk_coords : 
 			
 			# squish distance value to between 0 and 1
 			tile_center_distance /= tile_center_distance_max
+			equator_distance /= equator_distance_max
 			
 			# gets noise values for position
 			var elevation = elevation_noise.get_noise_2dv(world_coords)
@@ -123,20 +130,22 @@ func generate_chunk_contents(elevation_noise : OpenSimplexNoise, chunk_coords : 
 			moisture = noise_value_normalize(moisture)
 			
 			# push edges near the ground
-			elevation = elevation_distance_shape(elevation, tile_center_distance)
+#			elevation = elevation_distance_shape(elevation, tile_center_distance)
 
+			# center moisture near the equator
+			moisture = moisture_distance_shape(moisture, equator_distance)
+			
 			# elevation = tile_center_distance
 			# determine cell type
 			var cell_type = choose_cell(elevation, moisture)
-			
 			
 			# add cell type and position to tiles dict
 			# use this to actually set the chunk's cells later
 			# keep in mind you will need to establish what chunk this is in later
 			# because the data only returns local coordinates for each chunk.
 			# that being (0,0) through (15,15), for example.
-#			if x % 8 == 0 and y % 8 == 0:
-#				print([world_coords, tile_center_distance, elevation])
+			if x % 8 == 0 and y % 8 == 0:
+				print([world_coords, tile_center_distance, elevation, moisture])
 			contents[world_coords] = {"type" : cell_type, 
 									  "local coordinates" : local_coords, 
 									  "chunk coordinates" : chunk_coords,
