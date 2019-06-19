@@ -1,5 +1,6 @@
 extends KinematicBody2D
 var max_speed = 1000
+var speed = 200
 var accel = 0
 var current_speed = 0
 onready var environment : Node = get_node("../TileMap")
@@ -14,7 +15,10 @@ func _ready():
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
-	move_and_slide(move() * max_speed)
+	if Input.is_action_pressed("speed"):
+		move_and_slide(move() * max_speed)
+	else:
+		move_and_slide(move() * speed)
 	
 	if Input.is_action_just_pressed("zoom_in"):
 		$Camera2D.zoom_in()

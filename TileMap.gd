@@ -1,11 +1,11 @@
 extends TileMap
 
-export(int)var chunk_size = 64
+export(int)var chunk_size = 8
 export(bool)var island = false
 
 var elevation_noise := OpenSimplexNoise.new()
 var moisture_noise  := OpenSimplexNoise.new()
-var generation_distance := 3
+var generation_distance := 6
 var generated_chunks := []
 var chunk_queue := []
 var generated_tiles := {} setget , _get_generation_tiles
@@ -16,6 +16,7 @@ onready var world_center_x = (world_size.x * chunk_size) / 2
 onready var world_center_y = (world_size.y * chunk_size) / 2
 onready var world_center = Vector2(world_center_x, world_center_y)
 onready var player = $Player
+onready var camera = $Player/Camera2D
 onready var player_tile setget , _get_player_tile
 onready var player_chunk setget , _get_player_chunk
 onready var debug_map = $DebugMap
@@ -58,41 +59,55 @@ func _ready():
 	debug_map.scale = scale
 	generate_world()
 
+func _add_to_chunk_queue(coords):
+	if not generated_chunks.has(coords):
+		if not chunk_queue.has(coords):
+			chunk_queue.append(coords)
+
+func get_visible_tiles():
+	# Get view rectangle
+	var ctrans = get_canvas_transform()
+	var min_pos = -ctrans.get_origin() / ctrans.get_scale()
+	var view_size = get_viewport_rect().size / ctrans.get_scale()
+	var max_pos = min_pos + view_size
+			
+
 func _process(delta):
+	DEBUG.set_text("chunk_queue", chunk_queue)
 	DEBUG.set_text("player_tile", self.player_tile)
 	DEBUG.set_text("tile_info", _get_player_tile_info_text())
-	DEBUG.set_text("player_chunk", self.player_chunk)
 	DEBUG.set_text("thread_active", tile_setting_thread.is_active())
-	if !generated_chunks.has(self.player_chunk):
-		generate_chunk_contents(self.player_chunk)
+	DEBUG.set_text("zoom", camera.zoom)
+	DEBUG.set_text("camera_offset", camera.offset)
+	for x in range(-generation_distance/2,generation_distance/2):
+		for y in range(-generation_distance/2,generation_distance/2):
+			_add_to_chunk_queue(self.player_chunk + Vector2(x,y))
+	
+	if chunk_queue.size() > 0:
+		generate_queued_chunks()
+
+func queue_chunks_in_view():
 	pass
-	
-	generate_queued_chunks()
-	
+
 func generate_queued_chunks() -> void:
-	if chunk_queue.size():
-		var chunk = chunk_queue.pop_front()
-		var new_chunk = TileMap.new()
-		new_chunk.cell_size = cell_size
-		new_chunk.tile_set = tile_set
-		new_chunk.collision_mask = collision_mask
-		new_chunk.collision_layer = collision_layer
-		new_chunk.show_behind_parent = true
-		generate_chunks(chunk, new_chunk)
+	var chunk = chunk_queue.pop_front()
+	var chunk_contents = generate_chunk_contents(chunk)
+	var new_chunk = TileMap.new()
+	new_chunk.cell_size = cell_size
+	new_chunk.tile_set = tile_set
+	new_chunk.collision_mask = collision_mask
+	new_chunk.collision_layer = collision_layer
+	new_chunk.show_behind_parent = true
+	generate_chunks(chunk_contents, new_chunk)
 
 func generate_chunks(chunk,new_chunk):
 	var coords
-	var counter = 0
-	var num_tiles = len(chunk.keys())
-	
-	# While loop for performance
-	while counter < num_tiles:
-		var tile = chunk.keys()[counter]
+	for tile in chunk.keys():
 		coords = _map_to_chunk(tile)
 		new_chunk.set_cellv(tile, chunk[tile].type)
 		DEBUG.set_text("generating_tile", tile)
 		generated_tiles[tile] = chunk[tile]
-		counter += 1
+		pass
 	generated_chunks.append(coords)
 	add_child(new_chunk)
 	return new_chunk
@@ -108,6 +123,7 @@ func generate_chunk_contents(chunk_coords):
 	var tile_center_distance_max = Vector2(0,0).distance_to(world_center)
 	var equator_distance_max = Vector2(0,0).distance_to(Vector2(0, world_center_y))
 #	tile_setting_thread.wait_to_finish()
+	DEBUG.set_text("generating_chunk", chunk_coords)
 	for x in range(chunk_size):
 		for y in range(chunk_size):
 			x_off = (chunk_size * chunk_coords.x)
@@ -116,8 +132,6 @@ func generate_chunk_contents(chunk_coords):
 			var world_coords = Vector2(x + x_off, y + y_off)
 
 			# get distance of tile to center of world
-			var tile_center_distance = world_coords.distance_to(world_center)
-			var equator_distance = world_coords.distance_to(world_center)
 			
 			# gets noise values for position
 			var elevation = elevation_noise.get_noise_2dv(world_coords)
@@ -129,14 +143,17 @@ func generate_chunk_contents(chunk_coords):
 			
 			if island:
 				# squish distance value to between 0 and 1
+				var tile_center_distance = world_coords.distance_to(world_center)
+				var equator_distance = world_coords.distance_to(world_center)
 				tile_center_distance /= tile_center_distance_max
 				equator_distance /= equator_distance_max
 				
 				# push edges near the ground
 				elevation = elevation_distance_shape(elevation, tile_center_distance)
+				# center moisture near the equator
+				moisture = moisture_distance_shape(moisture, equator_distance)
 
-			# center moisture near the equator
-			moisture = moisture_distance_shape(moisture, equator_distance)
+			
 			
 			# elevation = tile_center_distance
 			# determine cell type
@@ -147,17 +164,14 @@ func generate_chunk_contents(chunk_coords):
 			# keep in mind you will need to establish what chunk this is in later
 			# because the data only returns local coordinates for each chunk.
 			# that being (0,0) through (15,15), for example.
-#			if x % 8 == 0 and y % 8 == 0:
-#				print([world_coords, tile_center_distance, elevation, moisture])
+			
 			contents[world_coords] = {"type" : cell_type,
 				"cell" : tile_set.tile_get_name(cell_type),
 				"local_coordinates" : local_coords,
-				"chunk_coordinates" : chunk_coords,
-				"distance_to_center" : tile_center_distance}
+				"chunk_coordinates" : chunk_coords}
 #			print(contents[world_coords])
 #			call_deferred("generate_chunk", contents 
-	chunk_queue.append(contents)
-	DEBUG.set_text("generating_chunk", chunk_coords)
+	return contents
 	pass
 
 	
