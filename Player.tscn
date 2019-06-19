@@ -8,7 +8,7 @@
 radius = 15.4943
 
 [node name="Player" type="KinematicBody2D"]
-scale = Vector2( 0.5, 0.5 )
+scale = Vector2( 0.25, 0.25 )
 script = ExtResource( 1 )
 __meta__ = {
 "_edit_group_": true
@@ -18,9 +18,7 @@ __meta__ = {
 shape = SubResource( 1 )
 
 [node name="Camera2D" type="Camera2D" parent="."]
-editor/display_folded = true
 current = true
-zoom = Vector2( 0.125, 0.125 )
 limit_smoothed = true
 smoothing_enabled = true
 drag_margin_left = 0.1

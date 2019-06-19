@@ -1,7 +1,7 @@
 extends Camera2D
 
-export (Array) var zoom_array = [2, 1, 0.5]
-var current_zoom_index = 0
+export (Array) var zoom_array = [1, 0.5, 0.25, 0.125]
+var current_zoom_index = 2
 onready var tween = $ZoomTween
 
 # Declare member variables here. Examples:
