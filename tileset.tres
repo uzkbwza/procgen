@@ -1,4 +1,4 @@
-[gd_scene load_steps=18 format=2]
+[gd_resource type="TileSet" load_steps=16 format=2]
 
 [ext_resource path="res://assets/shore_single.png" type="Texture" id=1]
 [ext_resource path="res://assets/sand_single.png" type="Texture" id=2]
@@ -10,7 +10,6 @@
 [ext_resource path="res://assets/mountain_single.png" type="Texture" id=8]
 [ext_resource path="res://assets/swamp_single.png" type="Texture" id=9]
 [ext_resource path="res://assets/snowy_mountain_single.png" type="Texture" id=10]
-[ext_resource path="res://TileMap.gd" type="Script" id=11]
 
 [sub_resource type="ConvexPolygonShape2D" id=1]
 points = PoolVector2Array( 0, 0, 8, 0, 8, 8, 0, 8 )
@@ -27,7 +26,7 @@ points = PoolVector2Array( 0, 0, 8, 0, 8, 8, 0, 8 )
 [sub_resource type="ConvexPolygonShape2D" id=5]
 points = PoolVector2Array( 0, 0, 8, 0, 8, 8, 0, 8 )
 
-[sub_resource type="TileSet" id=6]
+[resource]
 0/name = "shore"
 0/texture = ExtResource( 1 )
 0/tex_offset = Vector2( 0, 0 )
@@ -158,12 +157,3 @@ points = PoolVector2Array( 0, 0, 8, 0, 8, 8, 0, 8 )
 10/navigation_offset = Vector2( 0, 0 )
 10/shapes = [  ]
 10/z_index = 0
-
-[node name="TileMap" type="TileMap"]
-tile_set = SubResource( 6 )
-cell_size = Vector2( 8, 8 )
-collision_layer = 0
-collision_mask = 0
-format = 1
-tile_data = PoolIntArray( 15991066, 1, 0 )
-script = ExtResource( 11 )

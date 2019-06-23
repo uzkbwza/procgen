@@ -16,7 +16,7 @@ _global_script_class_icons={
 [application]
 
 config/name="procgen"
-run/main_scene="res://World.tscn"
+run/main_scene="res://Game.tscn"
 config/icon="res://icon.png"
 
 [autoload]
@@ -25,8 +25,6 @@ DEBUG="*res://DEBUG.gd"
 
 [display]
 
-window/size/width=1920
-window/size/height=1080
 window/per_pixel_transparency/enabled=true
 window/stretch/aspect="expand"
 
